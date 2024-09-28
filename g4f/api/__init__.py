@@ -75,7 +75,7 @@ class Api:
     def register_authorization(self):
         @self.app.middleware("http")
         async def authorization(request: Request, call_next):
-            if AppConfig.g4f_api_key and request.url.path in ["/v1/chat/completions", "/v1/completions"]:
+            if AppConfig.g4f_api_key and request.url.path in ["/openai/v1/chat/completions", "/openai/v1/completions"]:
                 try:
                     user_g4f_api_key = await self.get_g4f_api_key(request)
                 except HTTPException as e:
@@ -108,15 +108,15 @@ class Api:
     def register_routes(self):
         @self.app.get("/")
         async def read_root():
-            return RedirectResponse("/v1", 302)
+            return RedirectResponse("/openai/v1", 302)
 
-        @self.app.get("/v1")
+        @self.app.get("/openai/v1")
         async def read_root_v1():
             return HTMLResponse('g4f API: Go to '
-                                '<a href="/v1/chat/completions">chat/completions</a> '
-                                'or <a href="/v1/models">models</a>.')
+                                '<a href="/openai/v1/chat/completions">chat/completions</a> '
+                                'or <a href="/openai/v1/models">models</a>.')
 
-        @self.app.get("/v1/models")
+        @self.app.get("/openai/v1/models")
         async def models():
             model_list = {
                 model: g4f.models.ModelUtils.convert[model]
@@ -133,7 +133,7 @@ class Api:
                 "data": model_list,
             })
 
-        @self.app.get("/v1/models/{model_name}")
+        @self.app.get("/openai/v1/models/{model_name}")
         async def model_info(model_name: str):
             try:
                 model_info = g4f.models.ModelUtils.convert[model_name]
@@ -146,7 +146,7 @@ class Api:
             except:
                 return JSONResponse({"error": "The model does not exist."})
 
-        @self.app.post("/v1/chat/completions")
+        @self.app.post("/openai/v1/chat/completions")
         async def chat_completions(config: ChatCompletionsForm, request: Request = None, provider: str = None):
             try:
                 config.provider = provider if config.provider is None else config.provider
@@ -182,11 +182,11 @@ class Api:
                 logging.exception(e)
                 return Response(content=format_exception(e, config), status_code=500, media_type="application/json")
 
-        @self.app.post("/v1/completions")
+        @self.app.post("/openai/v1/completions")
         async def completions():
             return Response(content=json.dumps({'info': 'Not working yet.'}, indent=4), media_type="application/json")
 
-        @self.app.post("/v1/images/generations")
+        @self.app.post("/openai/v1/images/generations")
         async def images_generate(config: ImagesGenerateForm, request: Request = None, provider: str = None):
             try:
                 config.provider = provider if config.provider is None else config.provider
